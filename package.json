@@ -1,14 +1,17 @@
 {
   "name": "ai-server",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
   },
-  "keywords": [],
+  "keywords": ["claude", "ai", "proxy", "figma", "vercel"],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "A serverless Claude API proxy for Figma plugins",
   "dependencies": {
     "node-fetch": "^3.3.2"
   }
