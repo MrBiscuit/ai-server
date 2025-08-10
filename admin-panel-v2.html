@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Figma Plugin Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            padding: 16px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+        .toast.success {
+            background-color: #10b981;
+        }
+        .toast.error {
+            background-color: #ef4444;
+        }
+        .toast.info {
+            background-color: #3b82f6;
+        }
+        .editable-cell {
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .editable-cell:hover {
+            background-color: #f3f4f6;
+            border-color: #e5e7eb;
+        }
+        .editing {
+            background-color: #dbeafe !important;
+            border-color: #3b82f6 !important;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9998;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <!-- Main Container -->
+    <div class="min-h-screen py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">
+                            <i class="fas fa-users-cog text-blue-600 mr-3"></i>
+                            Figma Plugin Admin Dashboard
+                        </h1>
+                        <p class="text-gray-600 mt-2">Manage users, credits, and access permissions</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button id="refreshBtn" onclick="loadUsers()" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions removed to simplify layout -->
+
+            <!-- Users Table -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-semibold text-gray-900">
+                            <i class="fas fa-table text-purple-600 mr-2"></i>All Users
+                            <span id="userCount" class="text-sm font-normal text-gray-500"></span>
+                        </h2>
+                        <div class="flex items-center space-x-2">
+                            <input type="text" id="betaUsername"
+                                   class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="Add Figma username">
+                            <input type="hidden" id="betaCredits" value="1000">
+                            <button type="button" onclick="addBetaUser()"
+                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-user-plus mr-2"></i>Add
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Username
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    User ID
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Credits
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Access Type
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Purchased
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Used
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Created
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Users will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="emptyState" class="hidden p-12 text-center">
+                    <i class="fas fa-users text-4xl text-gray-300 mb-4"></i>
+                    <p class="text-gray-500">No users found. Add some beta users to get started!</p>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://vv-credits-db.sunshuaiqi.workers.dev';
+        let editingCell = null;
+        let originalValue = null;
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Show toast
+            setTimeout(() => toast.classList.add('show'), 100);
+            
+            // Remove toast after 5 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => container.removeChild(toast), 300);
+            }, 5000);
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat().format(num);
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        function getAccessTypeBadge(accessType) {
+            const colors = {
+                'beta': 'bg-blue-100 text-blue-800',
+                'paid': 'bg-green-100 text-green-800',
+                'none': 'bg-gray-100 text-gray-800'
+            };
+            const icons = {
+                'beta': 'fa-flask',
+                'paid': 'fa-credit-card',
+                'none': 'fa-ban'
+            };
+            
+            return `
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[accessType]}">
+                    <i class="fas ${icons[accessType]} mr-1"></i>
+                    ${accessType}
+                </span>
+            `;
+        }
+
+        // API Functions (Working version from simple panel)
+        async function makeRequest(url, options = {}) {
+            try {
+                console.log('Making request to:', url);
+                const response = await fetch(url, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const data = await response.json();
+                console.log('Response data:', data);
+                return data;
+            } catch (error) {
+                console.error('Request error:', error);
+                throw error;
+            }
+        }
+
+        // User Management Functions
+        async function loadUsers() {
+            try {
+                const data = await makeRequest(`${API_BASE}/admin/users?limit=100`);
+                
+                const tbody = document.getElementById('userTableBody');
+                const emptyState = document.getElementById('emptyState');
+                const userCount = document.getElementById('userCount');
+                
+                if (data.users && data.users.length > 0) {
+                    tbody.innerHTML = data.users.map(user => `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="text-sm font-medium text-gray-900">${user.figma_username}</div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-xs font-mono text-gray-500">${user.figma_user_id}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="editable-cell rounded-lg p-2 cursor-pointer" 
+                                     data-user-id="${user.figma_user_id}" 
+                                     data-username="${user.figma_username}"
+                                     data-field="credits" 
+                                     data-value="${user.credits}"
+                                     onclick="startEdit(event)">
+                                    <span class="text-sm font-semibold text-gray-900">${formatNumber(user.credits)}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="editable-cell rounded-lg p-2 cursor-pointer" 
+                                     data-user-id="${user.figma_user_id}" 
+                                     data-username="${user.figma_username}"
+                                     data-field="access_type" 
+                                     data-value="${user.access_type}"
+                                     onclick="startEdit(event)">
+                                    ${getAccessTypeBadge(user.access_type)}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${formatNumber(user.total_credits_purchased || 0)}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${formatNumber(user.total_credits_used || 0)}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${formatDate(user.created_at)}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="deleteUser('${user.figma_user_id}', '${user.figma_username}')"
+                                        class="text-red-600 hover:text-red-900 transition-colors">
+                                    <i class="fas fa-trash mr-1"></i>Delete
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+                    
+                    userCount.textContent = `(${data.users.length} users)`;
+                    emptyState.classList.add('hidden');
+                } else {
+                    tbody.innerHTML = '';
+                    userCount.textContent = '(0 users)';
+                    emptyState.classList.remove('hidden');
+                }
+                
+                showToast('Users loaded successfully', 'success');
+            } catch (error) {
+                showToast(`Load users error: ${error.message}`, 'error');
+                console.error('Load users error:', error);
+            }
+        }
+
+        async function addBetaUser() {
+            
+            const username = document.getElementById('betaUsername').value.trim();
+            const credits = parseInt(document.getElementById('betaCredits').value) || 1000;
+            
+            console.log('Debug - username:', username, 'credits:', credits);
+            
+            if (!username) {
+                showToast('Please enter a username', 'error');
+                return;
+            }
+            
+            if (!credits || credits <= 0) {
+                showToast('Please enter valid credits amount', 'error');
+                return;
+            }
+            
+            const payload = { figma_username: username, credits: credits };
+            console.log('Sending payload:', payload);
+            
+            try {
+                const data = await makeRequest(`${API_BASE}/admin/add-beta-user`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                
+                document.getElementById('betaUsername').value = '';
+                document.getElementById('betaCredits').value = '1000';
+                
+                showToast(`✅ Added ${username} with ${formatNumber(credits)} credits`, 'success');
+                loadUsers();
+            } catch (error) {
+                console.error('Add beta user error:', error);
+                showToast(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function updateCredits() {
+            
+            const username = document.getElementById('creditUsername').value.trim();
+            const credits = parseInt(document.getElementById('creditAmount').value);
+            const operation = document.getElementById('creditOperation').value;
+            
+            if (!username || isNaN(credits)) {
+                showToast('Please enter both username and credits amount', 'error');
+                return;
+            }
+            
+            try {
+                const data = await makeRequest(`${API_BASE}/admin/update-credits`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ figma_username: username, credits, operation })
+                });
+                
+                document.getElementById('creditUsername').value = '';
+                document.getElementById('creditAmount').value = '';
+                
+                showToast(`✅ Updated ${username} credits. New balance: ${formatNumber(data.new_credits)}`, 'success');
+                loadUsers();
+            } catch (error) {
+                showToast(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteUser(userId, username) {
+            if (!confirm(`Delete user "${username}"? This cannot be undone!`)) {
+                return;
+            }
+
+            try {
+                await makeRequest(`${API_BASE}/admin/delete-user`, {
+                    method: 'DELETE',
+                    body: JSON.stringify({ figma_user_id: userId })
+                });
+
+                showToast(`✅ Deleted user ${username}`, 'success');
+                loadUsers();
+            } catch (error) {
+                showToast(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+
+
+        // Inline Editing Functions (Working version from simple panel)
+        function startEdit(event) {
+            if (editingCell) return; // Prevent multiple edits
+            
+            editingCell = event.currentTarget;
+            const field = editingCell.dataset.field;
+            const currentValue = editingCell.dataset.value;
+            const userId = editingCell.dataset.userId;
+            originalValue = currentValue;
+            
+            console.log('Starting edit:', {field, currentValue, userId});
+            
+            editingCell.classList.add('editing');
+            
+            let inputHTML;
+            if (field === 'access_type') {
+                inputHTML = `
+                    <select class="w-full p-1 border border-blue-300 rounded text-sm">
+                        <option value="none" ${currentValue === 'none' ? 'selected' : ''}>none</option>
+                        <option value="beta" ${currentValue === 'beta' ? 'selected' : ''}>beta</option>
+                        <option value="paid" ${currentValue === 'paid' ? 'selected' : ''}>paid</option>
+                    </select>
+                `;
+            } else if (field === 'credits') {
+                inputHTML = `<input type="number" class="w-full p-1 border border-blue-300 rounded text-sm" value="${currentValue}">`;
+            }
+            
+            inputHTML += `
+                <div class="flex space-x-1 mt-2">
+                    <button onclick="saveEdit()" class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">
+                        ✓ Save
+                    </button>
+                    <button onclick="cancelEdit()" class="px-2 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600">
+                        ✕ Cancel
+                    </button>
+                </div>
+            `;
+            
+            editingCell.innerHTML = inputHTML;
+            editingCell.querySelector('input, select').focus();
+        }
+
+        async function saveEdit() {
+            if (!editingCell) return;
+            
+            const field = editingCell.dataset.field;
+            const userId = editingCell.dataset.userId;
+            const username = editingCell.dataset.username;
+            const input = editingCell.querySelector('input, select');
+            const newValue = input.value.trim();
+            
+            console.log('Saving edit:', {field, userId, username, newValue});
+            
+            if (!newValue) {
+                showToast('Value cannot be empty', 'error');
+                return;
+            }
+            
+            try {
+                if (field === 'credits') {
+                    const data = await makeRequest(`${API_BASE}/admin/update-credits`, {
+                        method: 'PUT',
+                        body: JSON.stringify({
+                            figma_username: username,
+                            credits: parseFloat(newValue),
+                            operation: 'set'
+                        })
+                    });
+                    
+                    editingCell.dataset.value = newValue;
+                    editingCell.innerHTML = `<span class="text-sm font-semibold text-gray-900">${formatNumber(parseFloat(newValue))}</span>`;
+                    showToast(`✅ Updated ${username} credits to ${formatNumber(parseFloat(newValue))}`, 'success');
+                } else if (field === 'access_type') {
+                    await makeRequest(`${API_BASE}/admin/update-access-type`, {
+                        method: 'PUT',
+                        body: JSON.stringify({
+                            figma_user_id: userId,
+                            access_type: newValue
+                        })
+                    });
+                    
+                    editingCell.dataset.value = newValue;
+                    editingCell.innerHTML = getAccessTypeBadge(newValue);
+                    showToast(`✅ Updated ${username} access type to ${newValue}`, 'success');
+                }
+                
+                // Re-add the onclick handler
+                editingCell.onclick = startEdit;
+                
+            } catch (error) {
+                showToast(`❌ Error: ${error.message}`, 'error');
+                cancelEdit();
+                return;
+            }
+            
+            editingCell.classList.remove('editing');
+            editingCell = null;
+            originalValue = null;
+        }
+
+        function cancelEdit() {
+            if (!editingCell) return;
+            
+            const field = editingCell.dataset.field;
+            
+            if (field === 'credits') {
+                editingCell.innerHTML = `<span class="text-sm font-semibold text-gray-900">${formatNumber(parseFloat(originalValue))}</span>`;
+            } else if (field === 'access_type') {
+                editingCell.innerHTML = getAccessTypeBadge(originalValue);
+            }
+            
+            // Re-add the onclick handler
+            editingCell.onclick = startEdit;
+            
+            editingCell.classList.remove('editing');
+            editingCell = null;
+            originalValue = null;
+        }
+
+        // Event Listeners (removed since using onclick handlers now)
+
+        // ESC key to cancel edit
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                if (editingCell) {
+                    cancelEdit();
+                }
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadUsers);
+    </script>
+</body>
+</html>

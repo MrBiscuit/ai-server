@@ -23,6 +23,45 @@ function calculateCost(usage) {
   return { inputCost, outputCost, totalCost };
 }
 
+const CREDITS_DB_URL = process.env.CREDITS_DB_URL || 'https://vv-credits-db.sunshuaiqi.workers.dev';
+
+async function deductUserCredits(figmaUserId, costUsd, usage) {
+  try {
+    const response = await fetch(`${CREDITS_DB_URL}/user/deduct`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        figma_user_id: figmaUserId,
+        cost_usd: costUsd,
+        description: 'Claude API usage',
+        metadata: usage ? JSON.stringify(usage) : null
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      return { 
+        success: false, 
+        error: errorData.error,
+        insufficient_credits: response.status === 402,
+        current_credits: errorData.current_credits || 0
+      };
+    }
+
+    const result = await response.json();
+    return { 
+      success: true, 
+      remaining_credits: result.remaining_credits,
+      transaction_id: result.transaction_id
+    };
+  } catch (error) {
+    console.error('Error deducting credits:', error);
+    return { success: false, error: 'Failed to process credits' };
+  }
+}
+
 export default async function handler(req, res) {
   // Set CORS headers for Figma plugin
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -42,11 +81,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { messages, sessionId, isFirstMessage, selectedCollectionIds } = req.body;
+    const { messages, sessionId, isFirstMessage, selectedCollectionIds, figma_user_id } = req.body;
 
     // Validate required fields
     if (!messages || !Array.isArray(messages)) {
       res.status(400).json({ error: 'Messages array is required' });
+      return;
+    }
+
+    if (!figma_user_id) {
+      res.status(400).json({ error: 'figma_user_id is required for credit tracking' });
       return;
     }
 
@@ -99,13 +143,40 @@ export default async function handler(req, res) {
     const usage = claudeData.usage;
     const cost = calculateCost(usage);
 
+    // Deduct credits for the API usage
+    let creditResult = { success: true }; // Default for when cost calculation fails
+    
+    if (cost && cost.totalCost > 0) {
+      creditResult = await deductUserCredits(figma_user_id, cost.totalCost, usage);
+      
+      if (!creditResult.success) {
+        if (creditResult.insufficient_credits) {
+          res.status(402).json({
+            error: 'Insufficient credits',
+            insufficient_credits: true,
+            current_credits: creditResult.current_credits,
+            required_credits: cost.totalCost,
+            usage,
+            cost
+          });
+          return;
+        } else {
+          console.error('Credit deduction failed:', creditResult.error);
+          // Continue with the response but log the error
+        }
+      }
+    }
+
     // Return response in expected format
     res.status(200).json({
       content,
       usage,
       cost,
       sessionId,
-      isFirstMessage
+      isFirstMessage,
+      remaining_credits: creditResult.remaining_credits,
+      transaction_id: creditResult.transaction_id,
+      credits_deducted: cost?.totalCost || 0
     });
 
   } catch (error) {
