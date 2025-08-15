@@ -74,6 +74,9 @@ deploy_database() {
     print_step "Applying migration 0004 (migrate existing credits)..."
     npx wrangler d1 execute vv_credits --file=migrations/0004_migrate_existing_credits.sql
     
+    print_step "Applying migration 0005 (license management)..."
+    npx wrangler d1 execute vv_credits --file=migrations/0005_license_management.sql
+    
     print_success "Database migrations completed"
     
     cd ..
@@ -158,7 +161,7 @@ update_package_scripts() {
     "deploy": "bash deploy.sh",
     "deploy:vercel": "vercel --prod",
     "deploy:workers": "cd vv-credits-db && npx wrangler deploy",
-    "migrate:db": "cd vv-credits-db && npx wrangler d1 execute vv_credits --file=migrations/0003_create_users_table.sql && npx wrangler d1 execute vv_credits --file=migrations/0004_migrate_existing_credits.sql",
+    "migrate:db": "cd vv-credits-db && npx wrangler d1 execute vv_credits --file=migrations/0003_create_users_table.sql && npx wrangler d1 execute vv_credits --file=migrations/0004_migrate_existing_credits.sql && npx wrangler d1 execute vv_credits --file=migrations/0005_license_management.sql",
     "logs:workers": "cd vv-credits-db && npx wrangler tail",
     "logs:vercel": "npx vercel logs"
   },

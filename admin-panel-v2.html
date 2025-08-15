@@ -65,6 +65,9 @@
             from { opacity: 0; transform: scale(0.9); }
             to { opacity: 1; transform: scale(1); }
         }
+        .sortable-header { cursor: pointer; user-select: none; }
+        .sortable-icon { color: #9ca3af; } /* gray-400 */
+        .sortable-icon.active { color: #2563eb; } /* blue-600 */
     </style>
 </head>
 <body class="bg-gray-50">
@@ -114,33 +117,54 @@
                                     class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
                                 <i class="fas fa-user-plus mr-2"></i>Add
                             </button>
-                        </div>
+                    </div>
                     </div>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Username
+                                <th data-sort-key="figma_username" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" aria-sort="none">
+                                    <div class="flex items-center space-x-1 sortable-header" onclick="changeSort('figma_username')" role="button" tabindex="0">
+                                        <span>Username</span>
+                                        <i class="fas fa-sort sortable-icon" data-sort-icon="figma_username"></i>
+                                    </div>
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    User ID
+                                <th data-sort-key="figma_user_id" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" aria-sort="none">
+                                    <div class="flex items-center space-x-1 sortable-header" onclick="changeSort('figma_user_id')" role="button" tabindex="0">
+                                        <span>User ID</span>
+                                        <i class="fas fa-sort sortable-icon" data-sort-icon="figma_user_id"></i>
+                                    </div>
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Credits
+                                <th data-sort-key="credits" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" aria-sort="none">
+                                    <div class="flex items-center space-x-1 sortable-header" onclick="changeSort('credits')" role="button" tabindex="0">
+                                        <span>Credits</span>
+                                        <i class="fas fa-sort sortable-icon" data-sort-icon="credits"></i>
+                                    </div>
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Access Type
+                                <th data-sort-key="access_type" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" aria-sort="none">
+                                    <div class="flex items-center space-x-1 sortable-header" onclick="changeSort('access_type')" role="button" tabindex="0">
+                                        <span>Access Type</span>
+                                        <i class="fas fa-sort sortable-icon" data-sort-icon="access_type"></i>
+                                    </div>
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Purchased
+                                <th data-sort-key="total_credits_purchased" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" aria-sort="none">
+                                    <div class="flex items-center space-x-1 sortable-header" onclick="changeSort('total_credits_purchased')" role="button" tabindex="0">
+                                        <span>Purchased</span>
+                                        <i class="fas fa-sort sortable-icon" data-sort-icon="total_credits_purchased"></i>
+                                    </div>
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Used
+                                <th data-sort-key="total_credits_used" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" aria-sort="none">
+                                    <div class="flex items-center space-x-1 sortable-header" onclick="changeSort('total_credits_used')" role="button" tabindex="0">
+                                        <span>Used</span>
+                                        <i class="fas fa-sort sortable-icon" data-sort-icon="total_credits_used"></i>
+                                    </div>
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Created
+                                <th data-sort-key="created_at" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" aria-sort="none">
+                                    <div class="flex items-center space-x-1 sortable-header" onclick="changeSort('created_at')" role="button" tabindex="0">
+                                        <span>Created</span>
+                                        <i class="fas fa-sort sortable-icon" data-sort-icon="created_at"></i>
+                                    </div>
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Actions
@@ -151,6 +175,32 @@
                             <!-- Users will be populated here -->
                         </tbody>
                     </table>
+                </div>
+                <!-- Pagination Controls -->
+                <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+                    <div id="paginationSummary" class="text-sm text-gray-600"></div>
+                    <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-2">
+                            <label for="pageSizeSelect" class="text-sm text-gray-600">Rows per page</label>
+                            <select id="pageSizeSelect" onchange="changePageSize(event)" class="px-2 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="100" selected>100</option>
+                                <option value="200">200</option>
+                                <option value="300">300</option>
+                                <option value="400">400</option>
+                                <option value="500">500</option>
+                                <option value="1000">1000</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button id="prevPageBtn" onclick="prevPage()" class="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                <i class="fas fa-chevron-left mr-1"></i>Prev
+                            </button>
+                            <span id="pageIndicator" class="text-sm text-gray-700"></span>
+                            <button id="nextPageBtn" onclick="nextPage()" class="px-3 py-1 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                Next<i class="fas fa-chevron-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div id="emptyState" class="hidden p-12 text-center">
                     <i class="fas fa-users text-4xl text-gray-300 mb-4"></i>
@@ -163,8 +213,35 @@
 
     <script>
         const API_BASE = 'https://vv-credits-db.sunshuaiqi.workers.dev';
+        // Optional: admin_key support via URL (?admin_key=xxx) or localStorage
+        const ADMIN_KEY_PARAM = (() => {
+            try {
+                const u = new URL(window.location.href);
+                const k = u.searchParams.get('admin_key') || localStorage.getItem('vv_admin_key') || '';
+                if (k) localStorage.setItem('vv_admin_key', k);
+                return k;
+            } catch (_) { return ''; }
+        })();
+        const SERVER_MAX_LIMIT = 1000; // Increased Cloudflare Worker limit to 1000
         let editingCell = null;
         let originalValue = null;
+        // Pagination state
+        let currentPage = 1; // 1-based
+        let pageSize = 100;
+        let totalUsers = null; // unknown until API provides
+        let hasMore = false;
+        // Sorting state
+        let sortKey = null; // e.g., 'figma_username', 'credits', 'created_at'
+        let sortDir = 'asc'; // 'asc' | 'desc'
+        // Cache for fetched users to avoid redundant API calls
+        let usersCache = new Map(); // key: "offset-limit", value: {users, timestamp}
+        const CACHE_TTL = 30000; // 30 seconds cache
+
+        // Clear cache when data is modified
+        function clearCache() {
+            usersCache.clear();
+            console.log('[Admin] Cache cleared');
+        }
 
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
@@ -201,6 +278,18 @@
             });
         }
 
+        // Safely render untrusted text in HTML and attribute contexts
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[ch]);
+        }
+        function escapeAttr(value) { return escapeHtml(value); }
+
         function getAccessTypeBadge(accessType) {
             const colors = {
                 'beta': 'bg-blue-100 text-blue-800',
@@ -222,6 +311,25 @@
         }
 
         // API Functions (Working version from simple panel)
+        function buildUsersUrl(limit, offset) {
+            if (ADMIN_KEY_PARAM) {
+                const qs = new URLSearchParams({ admin_key: ADMIN_KEY_PARAM, limit: String(limit), offset: String(offset) });
+                return `/api/admin/users?${qs.toString()}`; // proxy through ai-server with admin auth
+            }
+            return `${API_BASE}/admin/users?limit=${limit}&offset=${offset}`;
+        }
+
+        function buildUsersCursorUrl(limit, cursor) {
+            const base = ADMIN_KEY_PARAM ? '/api/admin/users-cursor' : `${API_BASE}/admin/users-cursor`;
+            const qs = new URLSearchParams({ limit: String(limit) });
+            if (ADMIN_KEY_PARAM) qs.set('admin_key', ADMIN_KEY_PARAM);
+            if (cursor && cursor.created_at && cursor.id) {
+                qs.set('cursor_created_at', cursor.created_at);
+                qs.set('cursor_id', cursor.id);
+            }
+            return `${base}?${qs.toString()}`;
+        }
+
         async function makeRequest(url, options = {}) {
             try {
                 console.log('Making request to:', url);
@@ -242,6 +350,9 @@
 
                 const data = await response.json();
                 console.log('Response data:', data);
+                if (Array.isArray(data.users) && data.users.length > 0 && typeof data.users[0]._row_index !== 'undefined') {
+                    console.log('[Admin] server row index range', data.users[0]._row_index, '→', data.users[data.users.length - 1]._row_index);
+                }
                 return data;
             } catch (error) {
                 console.error('Request error:', error);
@@ -249,30 +360,190 @@
             }
         }
 
+        // Robust, chunked fetch with caching for better performance
+        async function fetchUsersChunked(pageOffset, desiredCount) {
+            console.log('[Admin] fetchUsersChunked start', { pageOffset, desiredCount, SERVER_MAX_LIMIT });
+            
+            // If the desired page fits within a single API call, just fetch it directly
+            if (desiredCount <= SERVER_MAX_LIMIT) {
+                const cacheKey = `${pageOffset}-${desiredCount}`;
+                const cached = usersCache.get(cacheKey);
+                
+                // Check cache first
+                if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+                    console.log('[Admin] Using cached data for', cacheKey);
+                    return { users: cached.users, total: cached.total };
+                }
+                
+                // Direct fetch for single chunk
+                const r = await makeRequest(buildUsersUrl(desiredCount, pageOffset));
+                const result = {
+                    users: r.users || [],
+                    total: typeof r.total === 'number' ? r.total : null
+                };
+                
+                // Cache the result
+                usersCache.set(cacheKey, { 
+                    users: result.users, 
+                    total: result.total, 
+                    timestamp: Date.now() 
+                });
+                
+                return result;
+            }
+            
+            // For large page sizes, we need to fetch multiple chunks
+            // Optimize by fetching only what we need, not everything from 0
+            const allUsers = [];
+            let total = null;
+            let currentOffset = pageOffset;
+            const endOffset = pageOffset + desiredCount;
+            
+            // Fetch chunks starting from pageOffset
+            while (currentOffset < endOffset) {
+                const remaining = endOffset - currentOffset;
+                const lim = Math.min(SERVER_MAX_LIMIT, remaining);
+                
+                // Check cache for this chunk
+                const cacheKey = `${currentOffset}-${lim}`;
+                const cached = usersCache.get(cacheKey);
+                
+                let batch;
+                if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
+                    console.log('[Admin] Using cached chunk', cacheKey);
+                    batch = cached.users;
+                    if (cached.total !== null) total = cached.total;
+                } else {
+                    // eslint-disable-next-line no-await-in-loop
+                    const r = await makeRequest(buildUsersUrl(lim, currentOffset));
+                    if (typeof r.total === 'number') total = r.total;
+                    batch = Array.isArray(r.users) ? r.users : [];
+                    
+                    // Cache this chunk
+                    usersCache.set(cacheKey, { 
+                        users: batch, 
+                        total: r.total, 
+                        timestamp: Date.now() 
+                    });
+                    
+                    console.log('[Admin] Fetched chunk', { offset: currentOffset, lim, got: batch.length });
+                }
+                
+                if (batch.length === 0) break; // no more data
+                allUsers.push(...batch);
+                currentOffset += batch.length;
+                
+                if (batch.length < lim) break; // server exhausted
+            }
+            
+            console.log('[Admin] fetchUsersChunked done', { 
+                fetched: allUsers.length, 
+                pageOffset, 
+                desiredCount, 
+                total 
+            });
+            
+            return { users: allUsers, total };
+        }
+
+        // Alternative: cursor-based fetch for huge lists to avoid offset bugs
+        async function fetchUsersCursor(desiredCount) {
+            const users = [];
+            let total = null;
+            let cursor = null;
+            while (users.length < desiredCount) {
+                const lim = Math.min(SERVER_MAX_LIMIT, desiredCount - users.length);
+                // eslint-disable-next-line no-await-in-loop
+                const r = await makeRequest(buildUsersCursorUrl(lim, cursor));
+                if (typeof r.total === 'number') total = r.total;
+                const batch = Array.isArray(r.users) ? r.users : [];
+                if (batch.length === 0) break;
+                users.push(...batch);
+                cursor = r.next_cursor || null;
+                if (!r.has_more) break;
+            }
+            return { users, total };
+        }
+
         // User Management Functions
         async function loadUsers() {
             try {
-                const data = await makeRequest(`${API_BASE}/admin/users?limit=100`);
-                
+                const pageBaseOffset = (currentPage - 1) * pageSize;
+
+                // Prefer offset paging; if it repeats, fall back to cursor paging transparently
+                let { users: pageUsers, total: totalFromApi } = await fetchUsersChunked(pageBaseOffset, pageSize);
+                if (pageUsers.length && typeof pageUsers[0]._row_index !== 'undefined') {
+                    const firstIdx = pageUsers[0]._row_index;
+                    const lastIdx = pageUsers[pageUsers.length - 1]._row_index;
+                    if (currentPage > 1 && firstIdx < pageBaseOffset) {
+                        console.warn('[Admin] Detected offset repeat; switching to cursor mode');
+                        const cursorResult = await fetchUsersCursor(pageSize);
+                        pageUsers = cursorResult.users;
+                        totalFromApi = cursorResult.total;
+                    }
+                }
+                console.log('[Admin] loadUsers page', { currentPage, pageSize, pageBaseOffset, got: pageUsers.length, totalFromApi });
+                if (pageUsers.length && typeof pageUsers[0]._row_index !== 'undefined') {
+                    console.log('[Admin] page row index range', pageUsers[0]._row_index, '→', pageUsers[pageUsers.length - 1]._row_index);
+                }
+
+                let mergedUsers = pageUsers;
+
+                // Apply client-side sorting if a sort is active
+                if (sortKey) {
+                    const getComparableValue = (user) => {
+                        switch (sortKey) {
+                            case 'credits':
+                                return Number(user.credits) || 0;
+                            case 'total_credits_purchased':
+                                return Number(user.total_credits_purchased) || 0;
+                            case 'total_credits_used':
+                                return Number(user.total_credits_used) || 0;
+                            case 'created_at':
+                                return new Date(user.created_at).getTime() || 0;
+                            case 'figma_username':
+                            case 'figma_user_id':
+                            case 'access_type':
+                                return (user[sortKey] || '').toString().toLowerCase();
+                            default:
+                                return (user[sortKey] ?? '');
+                        }
+                    };
+
+                    mergedUsers.sort((a, b) => {
+                        const aVal = getComparableValue(a);
+                        const bVal = getComparableValue(b);
+                        let cmp = 0;
+                        if (typeof aVal === 'number' && typeof bVal === 'number') {
+                            cmp = aVal - bVal;
+                        } else {
+                            cmp = String(aVal).localeCompare(String(bVal), undefined, { numeric: true, sensitivity: 'base' });
+                        }
+                        return sortDir === 'asc' ? cmp : -cmp;
+                    });
+                }
+
                 const tbody = document.getElementById('userTableBody');
                 const emptyState = document.getElementById('emptyState');
                 const userCount = document.getElementById('userCount');
-                
-                if (data.users && data.users.length > 0) {
-                    tbody.innerHTML = data.users.map(user => `
+                const paginationSummary = document.getElementById('paginationSummary');
+                const pageIndicator = document.getElementById('pageIndicator');
+
+                if (mergedUsers.length > 0) {
+                    tbody.innerHTML = mergedUsers.map(user => `
                         <tr class="hover:bg-gray-50">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="flex items-center">
-                                    <div class="text-sm font-medium text-gray-900">${user.figma_username}</div>
+                                    <div class="text-sm font-medium text-gray-900">${escapeHtml(user.figma_username)}</div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-xs font-mono text-gray-500">${user.figma_user_id}</div>
+                                <div class="text-xs font-mono text-gray-500">${escapeHtml(user.figma_user_id)}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="editable-cell rounded-lg p-2 cursor-pointer" 
-                                     data-user-id="${user.figma_user_id}" 
-                                     data-username="${user.figma_username}"
+                                     data-user-id="${escapeAttr(user.figma_user_id)}" 
+                                     data-username="${escapeAttr(user.figma_username)}"
                                      data-field="credits" 
                                      data-value="${user.credits}"
                                      onclick="startEdit(event)">
@@ -281,8 +552,8 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="editable-cell rounded-lg p-2 cursor-pointer" 
-                                     data-user-id="${user.figma_user_id}" 
-                                     data-username="${user.figma_username}"
+                                     data-user-id="${escapeAttr(user.figma_user_id)}" 
+                                     data-username="${escapeAttr(user.figma_username)}"
                                      data-field="access_type" 
                                      data-value="${user.access_type}"
                                      onclick="startEdit(event)">
@@ -299,27 +570,128 @@
                                 ${formatDate(user.created_at)}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button onclick="deleteUser('${user.figma_user_id}', '${user.figma_username}')"
+                                <button data-user-id="${escapeAttr(user.figma_user_id)}" data-username="${escapeAttr(user.figma_username)}" onclick="deleteUser(this.dataset.userId, this.dataset.username)"
                                         class="text-red-600 hover:text-red-900 transition-colors">
                                     <i class="fas fa-trash mr-1"></i>Delete
                                 </button>
                             </td>
                         </tr>
                     `).join('');
-                    
-                    userCount.textContent = `(${data.users.length} users)`;
+
+                    const start = pageBaseOffset + 1;
+                    const end = pageBaseOffset + mergedUsers.length;
+                    totalUsers = (typeof totalFromApi === 'number') ? totalFromApi : null;
+                    // Probe for next page existence independent of 'total'
+                    let probeHasMore = false;
+                    try {
+                        const probeOffset = pageBaseOffset + pageSize;
+                        const probe = await makeRequest(buildUsersUrl(1, probeOffset));
+                        probeHasMore = Array.isArray(probe.users) && probe.users.length > 0;
+                    } catch (_) {}
+                    hasMore = probeHasMore || (totalUsers !== null ? (currentPage * pageSize < totalUsers) : (mergedUsers.length === pageSize));
+                    console.log('[Admin] pager', { start, end, totalUsers, hasMore });
+
+                    if (totalUsers !== null && !probeHasMore) {
+                        userCount.textContent = `(${totalUsers} users)`;
+                        pageIndicator.textContent = `Page ${currentPage} of ${Math.max(1, Math.ceil(totalUsers / pageSize))}`;
+                        paginationSummary.textContent = `Showing ${start}–${end} of ${totalUsers}`;
+                    } else {
+                        userCount.textContent = `(${end}${hasMore ? '+' : ''} users)`;
+                        pageIndicator.textContent = `Page ${currentPage}`;
+                        paginationSummary.textContent = `Showing ${start}–${end}${hasMore ? '+' : ''}`;
+                    }
+
+                    updatePaginationControls();
+                    updateSortIndicators();
                     emptyState.classList.add('hidden');
                 } else {
                     tbody.innerHTML = '';
                     userCount.textContent = '(0 users)';
+                    totalUsers = 0;
+                    hasMore = false;
+                    pageIndicator.textContent = `Page ${currentPage}`;
+                    paginationSummary.textContent = 'No results';
+                    updatePaginationControls();
+                    updateSortIndicators();
                     emptyState.classList.remove('hidden');
                 }
-                
+
                 showToast('Users loaded successfully', 'success');
+                return { users: mergedUsers, total: totalUsers, limit: pageSize, offset: pageBaseOffset };
             } catch (error) {
                 showToast(`Load users error: ${error.message}`, 'error');
                 console.error('Load users error:', error);
+                updatePaginationControls();
+                return { users: [] };
             }
+        }
+
+        function changeSort(key) {
+            if (sortKey === key) {
+                sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortKey = key;
+                sortDir = 'asc';
+            }
+            // Re-render current page with new sort
+            loadUsers();
+        }
+
+        function updateSortIndicators() {
+            // Update aria-sort on headers
+            const ths = document.querySelectorAll('thead th[data-sort-key]');
+            ths.forEach(th => {
+                const key = th.getAttribute('data-sort-key');
+                if (key === sortKey) {
+                    th.setAttribute('aria-sort', sortDir === 'asc' ? 'ascending' : 'descending');
+                } else {
+                    th.setAttribute('aria-sort', 'none');
+                }
+            });
+
+            // Update icon classes
+            const icons = document.querySelectorAll('[data-sort-icon]');
+            icons.forEach(icon => {
+                const key = icon.getAttribute('data-sort-icon');
+                icon.classList.remove('fa-sort', 'fa-sort-up', 'fa-sort-down', 'active');
+                if (key === sortKey) {
+                    icon.classList.add(sortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down', 'active');
+                } else {
+                    icon.classList.add('fa-sort');
+                }
+            });
+        }
+
+        function updatePaginationControls() {
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+            // Disable prev on first page
+            prevBtn.disabled = currentPage <= 1;
+            // Use hasMore to control Next; do not over-trust totalUsers which may be approximate
+            nextBtn.disabled = !hasMore;
+        }
+
+        async function prevPage() {
+            if (currentPage <= 1) return;
+            currentPage -= 1;
+            await loadUsers();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function nextPage() {
+            if (!hasMore) return;
+            currentPage += 1;
+            await loadUsers();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function changePageSize(event) {
+            const newSize = parseInt(event.target.value, 10);
+            if (!Number.isFinite(newSize) || newSize <= 0) return;
+            pageSize = newSize;
+            currentPage = 1; // reset to first page on size change
+            console.log('[Admin] pageSize changed', { pageSize });
+            await loadUsers();
         }
 
         async function addBetaUser() {
@@ -351,8 +723,9 @@
                 document.getElementById('betaUsername').value = '';
                 document.getElementById('betaCredits').value = '1000';
                 
+                clearCache(); // Clear cache after adding user
                 showToast(`✅ Added ${username} with ${formatNumber(credits)} credits`, 'success');
-                loadUsers();
+                await loadUsers();
             } catch (error) {
                 console.error('Add beta user error:', error);
                 showToast(`❌ Error: ${error.message}`, 'error');
@@ -379,6 +752,7 @@
                 document.getElementById('creditUsername').value = '';
                 document.getElementById('creditAmount').value = '';
                 
+                clearCache(); // Clear cache after updating credits
                 showToast(`✅ Updated ${username} credits. New balance: ${formatNumber(data.new_credits)}`, 'success');
                 loadUsers();
             } catch (error) {
@@ -397,8 +771,13 @@
                     body: JSON.stringify({ figma_user_id: userId })
                 });
 
+                clearCache(); // Clear cache after deleting user
                 showToast(`✅ Deleted user ${username}`, 'success');
-                loadUsers();
+                const data = await loadUsers();
+                if (data && data.users && data.users.length === 0 && currentPage > 1) {
+                    currentPage -= 1;
+                    await loadUsers();
+                }
             } catch (error) {
                 showToast(`❌ Error: ${error.message}`, 'error');
             }
@@ -477,6 +856,7 @@
                     
                     editingCell.dataset.value = newValue;
                     editingCell.innerHTML = `<span class="text-sm font-semibold text-gray-900">${formatNumber(parseFloat(newValue))}</span>`;
+                    clearCache(); // Clear cache after inline edit
                     showToast(`✅ Updated ${username} credits to ${formatNumber(parseFloat(newValue))}`, 'success');
                 } else if (field === 'access_type') {
                     await makeRequest(`${API_BASE}/admin/update-access-type`, {
@@ -489,6 +869,7 @@
                     
                     editingCell.dataset.value = newValue;
                     editingCell.innerHTML = getAccessTypeBadge(newValue);
+                    clearCache(); // Clear cache after inline edit
                     showToast(`✅ Updated ${username} access type to ${newValue}`, 'success');
                 }
                 

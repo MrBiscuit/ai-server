@@ -95,9 +95,22 @@ export default async function handler(req, res) {
     }
 
     // Validate message format
-    for (const message of messages) {
-      if (!message.role || !message.content || !['user', 'assistant'].includes(message.role)) {
-        res.status(400).json({ error: 'Invalid message format' });
+    for (let i = 0; i < messages.length; i++) {
+      const message = messages[i];
+      if (!message.role || !message.content) {
+        console.error(`Message at index ${i} missing role or content:`, message);
+        res.status(400).json({ 
+          error: 'Invalid message format',
+          details: `Message at index ${i} is missing required fields (role/content)`
+        });
+        return;
+      }
+      if (!['user', 'assistant'].includes(message.role)) {
+        console.error(`Message at index ${i} has invalid role '${message.role}':`, message);
+        res.status(400).json({ 
+          error: 'Invalid message format',
+          details: `Message at index ${i} has invalid role '${message.role}'. Must be 'user' or 'assistant'`
+        });
         return;
       }
     }
