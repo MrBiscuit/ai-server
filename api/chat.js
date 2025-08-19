@@ -63,10 +63,15 @@ async function deductUserCredits(figmaUserId, costUsd, usage) {
 }
 
 export default async function handler(req, res) {
-  // Set CORS headers for Figma plugin
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  // Set CORS headers for ALL responses (including errors)
+  const setCORSHeaders = () => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  };
+
+  // Set CORS headers immediately
+  setCORSHeaders();
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {

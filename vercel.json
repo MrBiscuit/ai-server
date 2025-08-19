@@ -4,5 +4,11 @@
       "path": "/api/subscription-check",
       "schedule": "0 0 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "api/chat.js": {
+      "memory": 1024,
+      "maxDuration": 30
+    }
+  }
 }
