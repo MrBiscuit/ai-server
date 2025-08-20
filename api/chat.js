@@ -65,11 +65,17 @@ async function deductUserCredits(figmaUserId, costUsd, usage) {
 export default async function handler(req, res) {
   // Set CORS headers for ALL responses (including errors)
   const setCORSHeaders = () => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // Allow both null origin (Figma plugins) and specific domains
+    const origin = req.headers.origin;
+    if (!origin || origin === 'null') {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept');
     res.setHeader('Access-Control-Max-Age', '86400');
-    res.setHeader('Vary', 'Origin');
+    res.setHeader('Access-Control-Allow-Credentials', 'false');
   };
 
   // Set CORS headers immediately
@@ -124,7 +130,7 @@ export default async function handler(req, res) {
 
     // Call Claude API with timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 55000); // 55s timeout (less than Vercel's 60s limit)
+    const timeoutId = setTimeout(() => controller.abort(), 85000); // 85s timeout (less than Vercel's 90s limit)
     
     let claudeRes;
     try {
@@ -206,7 +212,7 @@ export default async function handler(req, res) {
       }
     }
 
-    // Return response in expected format
+    // Return raw Claude response with credit info
     res.status(200).json({
       content,
       usage,
@@ -215,7 +221,8 @@ export default async function handler(req, res) {
       isFirstMessage,
       remaining_credits: creditResult.remaining_credits,
       transaction_id: creditResult.transaction_id,
-      credits_deducted: cost?.totalCost || 0
+      credits_deducted: cost?.totalCost || 0,
+      raw_response: claudeData // Include full Claude response for client processing
     });
 
   } catch (error) {
