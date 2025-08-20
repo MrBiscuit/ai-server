@@ -66,8 +66,10 @@ export default async function handler(req, res) {
   // Set CORS headers for ALL responses (including errors)
   const setCORSHeaders = () => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Access-Control-Max-Age', '86400');
+    res.setHeader('Vary', 'Origin');
   };
 
   // Set CORS headers immediately
@@ -120,20 +122,39 @@ export default async function handler(req, res) {
       }
     }
 
-    // Call Claude API
-    const claudeRes = await fetch(`${CLAUDE_BASE}/v1/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.CLAUDE_API_KEY_CLEAN,
-        'anthropic-version': API_VERSION,
-      },
-      body: JSON.stringify({
-        model: CLAUDE_MODEL,
-        max_tokens: MAX_TOKENS,
-        messages: messages,
-      })
-    });
+    // Call Claude API with timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 55000); // 55s timeout (less than Vercel's 60s limit)
+    
+    let claudeRes;
+    try {
+      claudeRes = await fetch(`${CLAUDE_BASE}/v1/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.CLAUDE_API_KEY_CLEAN,
+          'anthropic-version': API_VERSION,
+        },
+        body: JSON.stringify({
+          model: CLAUDE_MODEL,
+          max_tokens: MAX_TOKENS,
+          messages: messages,
+        }),
+        signal: controller.signal
+      });
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        console.error('Claude API request timed out');
+        res.status(504).json({ 
+          error: 'Request timeout', 
+          details: 'Claude API request took too long to respond'
+        });
+        return;
+      }
+      throw error;
+    }
+    clearTimeout(timeoutId);
 
     if (!claudeRes.ok) {
       const errorText = await claudeRes.text();
@@ -199,9 +220,26 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Server error:', error);
-    res.status(500).json({ 
-      error: 'Internal server error',
-      details: 'Something went wrong processing your request'
-    });
+    
+    // Ensure CORS headers are set even on error
+    setCORSHeaders();
+    
+    // Handle different types of errors
+    if (error.name === 'AbortError') {
+      res.status(504).json({ 
+        error: 'Request timeout',
+        details: 'The request took too long to process'
+      });
+    } else if (error.message && error.message.includes('fetch')) {
+      res.status(502).json({ 
+        error: 'Service unavailable',
+        details: 'External service is temporarily unavailable'
+      });
+    } else {
+      res.status(500).json({ 
+        error: 'Internal server error',
+        details: 'Something went wrong processing your request'
+      });
+    }
   }
 }
